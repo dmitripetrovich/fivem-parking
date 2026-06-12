@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS `parking_vehicles` (
   `owner` VARCHAR(50) NOT NULL,
   `model` VARCHAR(50) NOT NULL,
   `type` VARCHAR(20) NOT NULL DEFAULT 'automobile',
+  `properties` JSON DEFAULT NULL,
   `stored` VARCHAR(50) NOT NULL DEFAULT 'stored',
   PRIMARY KEY (`id`),
   UNIQUE KEY `plate` (`plate`),

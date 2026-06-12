@@ -25,6 +25,8 @@ export const getVehicleByPlate = (plate: string) => single<Vehicle>(`SELECT id, 
 
 export const plateExists = async (plate: string) => (await single<{ id: number }>("SELECT id FROM parking_vehicles WHERE plate = ? LIMIT 1", [plate])) !== null;
 
+export const countAllVehicles = async () => (await single<{ count: number }>("SELECT COUNT(*) as count FROM parking_vehicles", []))?.count ?? 0;
+
 export const getOwnedVehicles = (owner: string) => query<Vehicle>(`SELECT id, plate, owner, model, type, stored FROM parking_vehicles WHERE owner = ? ORDER BY id ASC`, [owner]);
 
 export const setVehicleStatus = async (id: number, status: VehicleStatus) => (await update("UPDATE parking_vehicles SET stored = ? WHERE id = ?", [status, id])) > 0;
@@ -38,5 +40,9 @@ export const insertVehicle = (plate: string, owner: string, model: string, type:
 export const updateVehicleType = async (id: number, type: string) => (await update("UPDATE parking_vehicles SET type = ? WHERE id = ?", [type, id])) > 0;
 
 export const countOwnedVehicles = async (owner: string) => (await single<{ count: number }>("SELECT COUNT(*) as count FROM parking_vehicles WHERE owner = ?", [owner]))?.count ?? 0;
+
+export const getVehicleProperties = async (id: number) => (await single<{ properties: string | null }>("SELECT properties FROM parking_vehicles WHERE id = ?", [id]))?.properties ?? null;
+
+export const saveVehicleProperties = (id: number, properties: string) => update("UPDATE parking_vehicles SET properties = ? WHERE id = ?", [properties, id]);
 
 export const deleteVehicle = async (plate: string) => (await update("DELETE FROM parking_vehicles WHERE plate = ?", [plate])) > 0;

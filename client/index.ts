@@ -1,6 +1,11 @@
-import { registerContext, showContext, onServerCallback, triggerServerCallback } from "@overextended/ox_lib/client";
+import { cache, registerContext, showContext, onServerCallback, triggerServerCallback, getVehicleProperties } from "@overextended/ox_lib/client";
 
 type Vehicle = { id: number; plate: string; model: string; stored: string | null };
+
+onServerCallback("fivem-parking:client:getVehicleProperties", () => {
+        if (!cache.vehicle) return null;
+        return getVehicleProperties(cache.vehicle);
+});
 
 onServerCallback("fivem-parking:client:listVehicles", (vehicles: Vehicle[], title?: string, readonly?: boolean) => {
         const options = vehicles.map((vehicle) => {

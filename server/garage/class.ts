@@ -1,7 +1,7 @@
 import * as Cfx from "@nativewrappers/fivem";
-import { triggerClientCallback } from "@overextended/ox_lib/server";
+import { triggerClientCallback, setVehicleProperties, VehicleProperties } from "@overextended/ox_lib/server";
 import { Config, getArea, getPlayerDisplayName, getPlayerLicense, isValidModelName, isValidPlate, notify, sendLog } from "../utils";
-import { getVehicle, getVehicleByPlate, getOwnedVehicles, countOwnedVehicles, plateExists, setVehicleStatus, setVehicleStatusAtomic, insertVehicle, updateVehicleType, deleteVehicle, Vehicle, VehicleStatus } from "../db";
+import { getVehicle, getVehicleByPlate, getOwnedVehicles, countOwnedVehicles, plateExists, setVehicleStatus, setVehicleStatusAtomic, insertVehicle, updateVehicleType, getVehicleProperties, saveVehicleProperties, deleteVehicle, Vehicle, VehicleStatus } from "../db";
 
 const PLATE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -107,6 +107,11 @@ export class Garage {
                         await updateVehicleType(vehicle.id, vehicleType);
                 }
 
+                const props = await triggerClientCallback<VehicleProperties | null>("fivem-parking:client:getVehicleProperties", source);
+                if (props) {
+                        await saveVehicleProperties(vehicle.id, JSON.stringify(props));
+                }
+
                 const parked = await setVehicleStatusAtomic(vehicle.id, "stored", "outside");
                 if (!parked) {
                         notify(source, "This vehicle cannot be parked.", "error");
@@ -194,6 +199,13 @@ export class Garage {
                         this.updateCacheStatus(license, vehicleId, "stored");
                         notify(source, "Failed to spawn the vehicle.", "error");
                         return false;
+                }
+
+                const savedProps = await getVehicleProperties(vehicleId);
+                if (savedProps) {
+                        try {
+                                setVehicleProperties(entity, JSON.parse(savedProps));
+                        } catch {}
                 }
 
                 notify(source, "Successfully spawned vehicle.", "success");

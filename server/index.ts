@@ -1,13 +1,14 @@
 import { onClientCallback } from "@overextended/ox_lib/server";
 import { Config, getPlayerLicense, notify } from "./utils";
 import "./commands";
-import { getVehicleByPlate, getOwnedVehicles, resetOutsideVehicles, setVehicleStatus } from "./db";
+import { getVehicleByPlate, getOwnedVehicles, countAllVehicles, resetOutsideVehicles, setVehicleStatus } from "./db";
 import { garage } from "./garage/class";
 
 on("onResourceStart", async (resourceName: string) => {
         if (resourceName !== GetCurrentResourceName()) return;
-        const count = await resetOutsideVehicles();
-        if (count > 0) console.log(`Reset ${count} ghost vehicle(s) to stored.`);
+        const [reset, total] = await Promise.all([resetOutsideVehicles(), countAllVehicles()]);
+        console.log(`Loaded ${total} vehicle(s).`);
+        if (reset > 0) console.log(`Reset ${reset} ghost vehicle(s) to stored.`);
 });
 
 const cooldowns = new Set<number>();
