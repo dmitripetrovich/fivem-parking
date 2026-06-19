@@ -18,8 +18,8 @@ export function notify(source: number, description: string, type: 'error' | 'suc
 
 export function isInArea(coords: { x: number; y: number; z: number }, areas: { x: number; y: number; z: number; radius: number }[]) {
         return areas.some((area) => {
-                const distance = Math.sqrt((coords.x - area.x) ** 2 + (coords.y - area.y) ** 2 + (coords.z - area.z) ** 2);
-                return distance <= area.radius;
+                const distance = (coords.x - area.x) ** 2 + (coords.y - area.y) ** 2 + (coords.z - area.z) ** 2;
+                return distance <= area.radius ** 2;
         });
 }
 
@@ -45,7 +45,7 @@ export async function sendLog(message: string) {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                                 username: GetCurrentResourceName(),
-                                content: `**[${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]** ${message}`,
+                                content: `**[${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}/${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}]** ${message}`,
                         }),
                         signal: controller.signal,
                 });
