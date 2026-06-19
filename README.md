@@ -2,8 +2,8 @@
 
 A vehicle garage system for FiveM, allowing players to store and retrieve owned vehicles from any location.
 
-[![](https://img.shields.io/github/contributors/ivanbytchkov/fivem-parking?logo=github)](https://github.com/ivanbytchkov/fivem-parking/graphs/contributors)
-[![](https://img.shields.io/github/last-commit/ivanbytchkov/fivem-parking?logo=github)](https://github.com/ivanbytchkov/fivem-parking/commits/main)
+[![](https://img.shields.io/github/contributors/dmitripetrovich/fivem-parking?logo=github)](https://github.com/dmitripetrovich/fivem-parking/graphs/contributors)
+[![](https://img.shields.io/github/last-commit/dmitripetrovich/fivem-parking?logo=github)](https://github.com/dmitripetrovich/fivem-parking/commits/main)
 
 ## Building
 
@@ -19,7 +19,7 @@ Use `pnpm watch` to rebuild whenever a file is modified.
 
 This resource won't work without [oxmysql](https://github.com/overextended/oxmysql) and [ox_lib](https://github.com/overextended/ox_lib).
 
-1. Download or clone the repository with `git clone https://github.com/ivanbytchkov/fivem-parking`.
+1. Download or clone the repository with `git clone https://github.com/dmitripetrovich/fivem-parking`.
 2. Copy `fivem-parking` folder into the `resources/` directory.
 3. Add `ensure fivem-parking` to where resources are being loaded (after oxmysql/ox_lib resource).
 

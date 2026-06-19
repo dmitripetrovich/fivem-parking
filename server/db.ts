@@ -19,6 +19,8 @@ const insert = (sql: string, params: unknown[] = []): Promise<number> => new Pro
 
 const update = (sql: string, params: unknown[] = []): Promise<number> => new Promise((resolve, reject) => ox.update(sql, params, (result: number | null) => result !== null ? resolve(result) : reject(new Error(`Update returned null: ${sql}`))));
 
+const execute = (sql: string, params: unknown[] = []): Promise<number> => new Promise((resolve, reject) => ox.update(sql, params, (result: number | null) => result !== null ? resolve(result) : reject(new Error(`Execute returned null: ${sql}`))));
+
 export const getVehicle = (id: number) => single<Vehicle>(`SELECT id, plate, owner, model, type, stored FROM parking_vehicles WHERE id = ? LIMIT 1`, [id]);
 
 export const getVehicleByPlate = (plate: string) => single<Vehicle>(`SELECT id, plate, owner, model, type, stored FROM parking_vehicles WHERE plate = ? LIMIT 1`, [plate]);
@@ -45,4 +47,4 @@ export const getVehicleProperties = async (id: number) => (await single<{ proper
 
 export const saveVehicleProperties = (id: number, properties: string) => update("UPDATE parking_vehicles SET properties = ? WHERE id = ?", [properties, id]);
 
-export const deleteVehicle = async (plate: string) => (await update("DELETE FROM parking_vehicles WHERE plate = ?", [plate])) > 0;
+export const deleteVehicle = async (plate: string) => (await execute("DELETE FROM parking_vehicles WHERE plate = ?", [plate])) > 0;

@@ -1,7 +1,7 @@
 {
         "name": "fivem-parking",
         "description": "Server-side vehicle garage for CitizenFX servers.",
-        "author": "BerkieBb, ivanbytchkov",
+        "author": "BerkieBb, dmitripetrovich",
         "version": "0.32.5",
         "type": "module",
         "scripts": {
@@ -10,7 +10,7 @@
         },
         "repository": {
                 "type": "git",
-                "url": "https://github.com/ivanbytchkov/fivem-parking.git"
+                "url": "https://github.com/dmitripetrovich/fivem-parking.git"
         },
         "dependencies": {
                 "@nativewrappers/fivem": "^0.0.90",
