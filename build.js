@@ -1,6 +1,5 @@
 import { context } from "esbuild";
 import { readFileSync, writeFileSync } from "fs";
-import process from "process";
 
 const watch = process.argv.includes("--watch");
 const dry = process.argv.includes("--dry-run");
@@ -16,7 +15,7 @@ const MANIFEST_DEFAULTS = {
 };
 
 function sanitize(s) {
-        return s.replace(/['\n\r]/g, (c) => ({ "'": "\\'", "\n": "\\n", "\r": "\\r" })[c] ?? c);
+        return s.replace(/['\n\r]/g, (c) => ({ "'": "\\'", "\n": "\\n", "\r": "\\r" })[c]);
 }
 
 function addField(lines, field, value) {
@@ -33,11 +32,10 @@ function addTable(lines, title, items) {
 function generateManifest() {
         const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 
-        const lines = [
-                `fx_version '${MANIFEST_DEFAULTS.fx_version}'`,
-                `game '${MANIFEST_DEFAULTS.game}'`,
-        ];
+        const lines = [];
 
+        addField(lines, "fx_version", MANIFEST_DEFAULTS.fx_version);
+        addField(lines, "game", MANIFEST_DEFAULTS.game);
         addField(lines, "name", pkg.name);
         addField(lines, "description", pkg.description);
         addField(lines, "author", pkg.author);

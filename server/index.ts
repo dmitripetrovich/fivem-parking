@@ -37,12 +37,12 @@ exports("impoundVehicle", async (plate: string): Promise<boolean> => {
 
 exports("getVehicleByPlate", async (plate: string) => {
         if (typeof plate !== "string" || !plate) return null;
-        return await getVehicleByPlate(plate.trim());
+        return getVehicleByPlate(plate.trim());
 });
 
 exports("getPlayerVehicles", async (license: string) => {
         if (typeof license !== "string" || !license) return [];
-        return await getOwnedVehicles(license.trim());
+        return getOwnedVehicles(license.trim());
 });
 
 exports("setVehicleStatus", async (plate: string, status: string): Promise<boolean> => {
@@ -66,7 +66,7 @@ onClientCallback("fivem-parking:server:returnVehicle", async (src: number, vehic
                 notify(src, "Please wait before performing another vehicle action.", "error");
                 return false;
         }
-        return await garage.returnVehicle(src, { vehicleId });
+        return garage.returnVehicle(src, { vehicleId });
 });
 
 onClientCallback("fivem-parking:server:spawnVehicle", async (src: number, vehicleId: number) => {
@@ -74,5 +74,5 @@ onClientCallback("fivem-parking:server:spawnVehicle", async (src: number, vehicl
                 notify(src, "Please wait before performing another vehicle action.", "error");
                 return false;
         }
-        return await garage.spawnVehicle(src, { vehicleId });
+        return garage.spawnVehicle(src, { vehicleId });
 });

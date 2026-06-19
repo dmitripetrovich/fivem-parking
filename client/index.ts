@@ -2,6 +2,8 @@ import { cache, registerContext, showContext, onServerCallback, triggerServerCal
 
 type Vehicle = { id: number; plate: string; model: string; stored: string | null };
 
+const STATUS_LABELS: Record<string, string> = { stored: "In Garage", outside: "Outside", impound: "Impounded" };
+
 onServerCallback("fivem-parking:client:getVehicleProperties", () => {
         if (!cache.vehicle) return null;
         return getVehicleProperties(cache.vehicle);
@@ -17,7 +19,7 @@ onServerCallback("fivem-parking:client:listVehicles", (vehicles: Vehicle[], titl
                         metadata: [
                                 {
                                         label: "Status",
-                                        value: stored ? "In Garage" : vehicle.stored === "outside" ? "Outside" : vehicle.stored === "impound" ? "Impounded" : "Unknown",
+                                        value: (vehicle.stored && STATUS_LABELS[vehicle.stored]) || "Unknown",
                                 },
                         ],
                         disabled: !state,
