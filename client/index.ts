@@ -17,7 +17,7 @@ onServerCallback("fivem-parking:client:listVehicles", (vehicles: Vehicle[], titl
                         metadata: [
                                 {
                                         label: "Status",
-                                        value: vehicle.stored === "stored" ? "In Garage" : vehicle.stored === "outside" ? "Outside" : vehicle.stored === "impound" ? "Impounded" : "Unknown",
+                                        value: stored ? "In Garage" : vehicle.stored === "outside" ? "Outside" : vehicle.stored === "impound" ? "Impounded" : "Unknown",
                                 },
                         ],
                         disabled: !state,
