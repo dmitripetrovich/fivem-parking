@@ -1,6 +1,6 @@
 import * as Cfx from "@nativewrappers/fivem";
 import { triggerClientCallback, setVehicleProperties, VehicleProperties } from "@overextended/ox_lib/server";
-import { Config, getArea, getPlayerDisplayName, getPlayerLicense, isValidModelName, isValidPlate, notify, sendLog } from "../utils";
+import { Config, isInArea, getPlayerDisplayName, getPlayerLicense, isValidModelName, isValidPlate, notify, sendLog } from "../utils";
 import { getVehicle, getVehicleByPlate, getOwnedVehicles, countOwnedVehicles, plateExists, setVehicleStatus, setVehicleStatusAtomic, insertVehicle, updateVehicleType, getVehicleProperties, saveVehicleProperties, deleteVehicle, Vehicle, VehicleStatus } from "../db";
 
 const PLATE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -231,7 +231,7 @@ export class Garage {
                 }
 
                 const coords = GetEntityCoords(ped, true);
-                if (!getArea({ x: coords[0], y: coords[1], z: coords[2] }, Config.Impound.Location)) {
+                if (!isInArea({ x: coords[0], y: coords[1], z: coords[2] }, Config.Impound.Location)) {
                         notify(source, "You are not in the impound area!", "error");
                         return false;
                 }
@@ -267,9 +267,6 @@ export class Garage {
                         return false;
                 }
 
-                const license = getPlayerLicense(source);
-                if (!license) return false;
-
                 if (!isValidModelName(args.model)) {
                         notify(source, "Invalid vehicle model name.", "error");
                         return false;
@@ -303,9 +300,6 @@ export class Garage {
                         notify(source, "You do not have permission to use this command.", "error");
                         return false;
                 }
-
-                const license = getPlayerLicense(source);
-                if (!license) return false;
 
                 if (!isValidPlate(args.plate)) {
                         notify(source, "Invalid plate number.", "error");
@@ -401,9 +395,6 @@ export class Garage {
                         notify(source, "You do not have permission to use this command.", "error");
                         return false;
                 }
-
-                const license = getPlayerLicense(source);
-                if (!license) return false;
 
                 const targetLicense = getPlayerLicense(args.playerId);
                 if (!targetLicense) {

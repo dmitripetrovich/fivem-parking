@@ -16,7 +16,7 @@ export function notify(source: number, description: string, type: 'error' | 'suc
         TriggerClientEvent('ox_lib:notify', source, { description, type });
 }
 
-export function getArea(coords: { x: number; y: number; z: number }, areas: { x: number; y: number; z: number; radius: number }[]) {
+export function isInArea(coords: { x: number; y: number; z: number }, areas: { x: number; y: number; z: number; radius: number }[]) {
         return areas.some((area) => {
                 const distance = Math.sqrt((coords.x - area.x) ** 2 + (coords.y - area.y) ** 2 + (coords.z - area.z) ** 2);
                 return distance <= area.radius;
