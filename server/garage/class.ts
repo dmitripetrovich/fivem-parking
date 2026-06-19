@@ -47,7 +47,7 @@ export class Garage {
                 if (!license) return [];
 
                 const vehicles = await getOwnedVehicles(license);
-                if (!vehicles || vehicles.length === 0) {
+                if (vehicles.length === 0) {
                         notify(source, "You do not own any vehicles!", "error");
                         return [];
                 }
@@ -291,7 +291,7 @@ export class Garage {
                 }
 
                 this.vehicleCache.delete(targetLicense);
-                notify(source, "Successfully spawned vehicle.", "success");
+                notify(source, "Successfully gave vehicle.", "success");
                 return true;
         }
 

@@ -6,7 +6,7 @@ new Command(["list", "vg"], "View a list of your owned vehicles.", async ({ sour
         await garage.listVehicles(source);
 }, undefined, false);
 
-new Command(["park", "vp"], "Store a vehicle in to your personal garage.", async ({ source }) => {
+new Command(["park", "vp"], "Store a vehicle into your personal garage.", async ({ source }) => {
         await garage.parkVehicle(source);
 }, undefined, false);
 

@@ -1,7 +1,7 @@
 import { onClientCallback } from "@overextended/ox_lib/server";
 import { Config, getPlayerLicense, notify } from "./utils";
 import "./commands";
-import { getVehicleByPlate, getOwnedVehicles, countAllVehicles, resetOutsideVehicles, setVehicleStatus } from "./db";
+import { getVehicleByPlate, getOwnedVehicles, countAllVehicles, resetOutsideVehicles, setVehicleStatus, type VehicleStatus } from "./db";
 import { garage } from "./garage/class";
 
 on("onResourceStart", async (resourceName: string) => {
@@ -50,7 +50,7 @@ exports("setVehicleStatus", async (plate: string, status: string): Promise<boole
         if (!["stored", "outside", "impound"].includes(status)) return false;
         const vehicle = await getVehicleByPlate(plate.trim());
         if (!vehicle) return false;
-        await setVehicleStatus(vehicle.id, status);
+        await setVehicleStatus(vehicle.id, status as VehicleStatus);
         return true;
 });
 
