@@ -61,7 +61,7 @@ local vehicle = exports['fivem-parking']:getVehicleByPlate(plate)
 local vehicles = exports['fivem-parking']:getPlayerVehicles(license)
 ```
 
-- `setVehicleStatus(plate: string, status: string): Promise<boolean>` - Sets the status of a vehicle by plate, `stored`, `outside`, or `impound`.
+- `setVehicleStatus(plate: string, status: 'stored' | 'outside' | 'impound'): Promise<boolean>` - Sets the status of a vehicle by plate. Any value other than `stored`, `outside`, or `impound` is rejected and resolves to `false`.
 
 ```lua
 local success = exports['fivem-parking']:setVehicleStatus(plate, 'stored')

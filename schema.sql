@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS `parking_vehicles` (
   `stored` VARCHAR(50) NOT NULL DEFAULT 'stored',
   PRIMARY KEY (`id`),
   UNIQUE KEY `plate` (`plate`),
-  KEY `parking_vehicles_owner_key` (`owner`)
+  KEY `parking_vehicles_owner_key` (`owner`),
+  KEY `parking_vehicles_stored_key` (`stored`)
 );

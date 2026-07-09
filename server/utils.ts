@@ -9,18 +9,16 @@ export function getPlayerLicense(source: number): string | null {
 }
 
 export function getPlayerDisplayName(source: number): string {
-        return GetPlayerName(String(source)) ?? String(source);
+        return GetPlayerName(String(source)) || String(source);
 }
 
 export function notify(source: number, description: string, type: 'error' | 'success' | 'info' | 'warning' = 'info') {
         TriggerClientEvent('ox_lib:notify', source, { description, type });
 }
 
-export function isInArea(coords: { x: number; y: number; z: number }, areas: { x: number; y: number; z: number; radius: number }[]) {
-        return areas.some((area) => {
-                const distance = (coords.x - area.x) ** 2 + (coords.y - area.y) ** 2 + (coords.z - area.z) ** 2;
-                return distance <= area.radius ** 2;
-        });
+export function isInArea(coords: { x: number; y: number; z: number }, area: { x: number; y: number; z: number; radius: number }) {
+        const distance = (coords.x - area.x) ** 2 + (coords.y - area.y) ** 2 + (coords.z - area.z) ** 2;
+        return distance <= area.radius ** 2;
 }
 
 export function isValidPlate(plate: string): boolean {

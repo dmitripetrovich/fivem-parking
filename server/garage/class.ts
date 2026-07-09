@@ -1,13 +1,14 @@
 import * as Cfx from "@nativewrappers/fivem";
 import { triggerClientCallback, setVehicleProperties, VehicleProperties } from "@overextended/ox_lib/server";
 import { Config, isInArea, getPlayerDisplayName, getPlayerLicense, isValidModelName, isValidPlate, notify, sendLog } from "../utils";
-import { getVehicle, getVehicleByPlate, getOwnedVehicles, countOwnedVehicles, plateExists, setVehicleStatus, setVehicleStatusAtomic, insertVehicle, updateVehicleType, getVehicleProperties, saveVehicleProperties, deleteVehicle, Vehicle, VehicleStatus } from "../db";
+import { getVehicle, getVehicleByPlate, getOwnedVehicles, countOwnedVehicles, plateExists, setVehicleStatus, setVehicleStatusAtomic, insertVehicle, updateVehicleType, getVehicleProperties, saveVehicleProperties, deleteVehicle } from "../db";
 
 const PLATE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const PROPERTIES_CALLBACK_TIMEOUT_MS = 5000;
 
 export class Garage {
         private spawnedEntities = new Map<number, number>();
-        private vehicleCache = new Map<string, Vehicle[]>();
+        private cooldowns = new Set<number>();
 
         constructor() {
                 on("entityRemoved", async (entity: number) => {
@@ -18,28 +19,30 @@ export class Garage {
                 });
         }
 
-        private updateCacheStatus(license: string, vehicleId: number, status: VehicleStatus) {
-                const cached = this.vehicleCache.get(license);
-                if (!cached) return;
-                const vehicle = cached.find(v => v.id === vehicleId);
-                if (vehicle) vehicle.stored = status;
+        private checkCooldown(source: number): boolean {
+                if (this.cooldowns.has(source)) return false;
+                this.cooldowns.add(source);
+                setTimeout(() => this.cooldowns.delete(source), Config.Cooldown);
+                return true;
         }
 
-        public clearPlayerCache(license: string) {
-                this.vehicleCache.delete(license);
+        public clearCooldown(source: number) {
+                this.cooldowns.delete(source);
         }
 
-        private async generateUniquePlate(): Promise<string> {
-                for (let i = 0; i < 10; i++) {
+        public cleanupSpawnedEntities() {
+                for (const entity of this.spawnedEntities.keys()) {
+                        if (DoesEntityExist(entity)) DeleteEntity(entity);
+                }
+                this.spawnedEntities.clear();
+        }
+
+        private async generateUniquePlate(): Promise<string | null> {
+                for (let i = 0; i < 20; i++) {
                         const plate = Array.from({ length: 8 }, () => PLATE_CHARS[Math.floor(Math.random() * PLATE_CHARS.length)]).join("");
                         if (!(await plateExists(plate))) return plate;
                 }
-                for (let i = 0; i < 10; i++) {
-                        const base = Array.from({ length: 6 }, () => PLATE_CHARS[Math.floor(Math.random() * PLATE_CHARS.length)]).join("");
-                        const plate = (base + Date.now().toString(36).slice(-2)).toUpperCase().slice(0, 8);
-                        if (!(await plateExists(plate))) return plate;
-                }
-                throw new Error("Failed to generate a unique plate after 20 attempts.");
+                return null;
         }
 
         public async listVehicles(source: number) {
@@ -52,7 +55,6 @@ export class Garage {
                         return [];
                 }
 
-                this.vehicleCache.set(license, vehicles);
                 triggerClientCallback("fivem-parking:client:listVehicles", source, vehicles);
                 return vehicles;
         }
@@ -81,9 +83,7 @@ export class Garage {
                         return false;
                 }
 
-                const cached = this.vehicleCache.get(license);
-                const vehicle = cached?.find(v => v.plate === plate) ?? await getVehicleByPlate(plate);
-
+                const vehicle = await getVehicleByPlate(plate);
                 if (!vehicle) {
                         notify(source, "This vehicle is not registered in the system.", "error");
                         return false;
@@ -99,18 +99,13 @@ export class Garage {
                         return false;
                 }
 
+                if (!this.checkCooldown(source)) {
+                        notify(source, "Please wait before performing another vehicle action.", "error");
+                        return false;
+                }
+
                 // Add your inventory check here before deducting (Config.Garage.StoreCost is the amount).
                 // Add your money deduction here.
-
-                const vehicleType = GetVehicleType(entity);
-                if (vehicleType && vehicleType !== vehicle.type) {
-                        await updateVehicleType(vehicle.id, vehicleType);
-                }
-
-                const props = await triggerClientCallback<VehicleProperties | null>("fivem-parking:client:getVehicleProperties", source);
-                if (props) {
-                        await saveVehicleProperties(vehicle.id, JSON.stringify(props));
-                }
 
                 const parked = await setVehicleStatusAtomic(vehicle.id, "stored", "outside");
                 if (!parked) {
@@ -118,7 +113,21 @@ export class Garage {
                         return false;
                 }
 
-                this.updateCacheStatus(license, vehicle.id, "stored");
+                const vehicleType = GetVehicleType(entity);
+                if (vehicleType && vehicleType !== vehicle.type) {
+                        await updateVehicleType(vehicle.id, vehicleType);
+                }
+
+                let props: VehicleProperties | null | void = null;
+                try {
+                        props = await triggerClientCallback<VehicleProperties | null>("fivem-parking:client:getVehicleProperties", source, PROPERTIES_CALLBACK_TIMEOUT_MS);
+                } catch (err) {
+                        console.warn(`[fivem-parking] failed to fetch vehicle properties for #${vehicle.id}: ${err instanceof Error ? err.message : String(err)}`);
+                }
+                if (props) {
+                        await saveVehicleProperties(vehicle.id, JSON.stringify(props));
+                }
+
                 this.spawnedEntities.delete(entity);
                 DeleteEntity(entity);
 
@@ -139,9 +148,7 @@ export class Garage {
                         return false;
                 }
 
-                const cached = this.vehicleCache.get(license);
-                const vehicle = cached?.find(v => v.id === vehicleId) ?? await getVehicle(vehicleId);
-
+                const vehicle = await getVehicle(vehicleId);
                 if (!vehicle || vehicle.owner !== license) {
                         notify(source, "Something went wrong.", "error");
                         return false;
@@ -152,22 +159,25 @@ export class Garage {
                         return false;
                 }
 
-                // Add your inventory check here before deducting (Config.Garage.RetrieveCost is the amount).
-                // Add your money deduction here.
-
                 const ped = GetPlayerPed(source);
                 if (ped === 0) {
                         notify(source, "Could not find your character.", "error");
                         return false;
                 }
 
+                if (!this.checkCooldown(source)) {
+                        notify(source, "Please wait before performing another vehicle action.", "error");
+                        return false;
+                }
+
+                // Add your inventory check here before deducting (Config.Garage.RetrieveCost is the amount).
+                // Add your money deduction here.
+
                 const reserved = await setVehicleStatusAtomic(vehicleId, "outside", "stored");
                 if (!reserved) {
                         notify(source, "Vehicle is not in storage!", "error");
                         return false;
                 }
-
-                this.updateCacheStatus(license, vehicleId, "outside");
 
                 const coords = GetEntityCoords(ped, true);
                 const heading = GetEntityHeading(ped);
@@ -178,7 +188,6 @@ export class Garage {
                 const entity = CreateVehicleServerSetter(GetHashKey(vehicle.model), vehicle.type || "automobile", spawnX, spawnY, coords[2] + 1, heading);
                 if (!entity) {
                         await setVehicleStatus(vehicleId, "stored");
-                        this.updateCacheStatus(license, vehicleId, "stored");
                         notify(source, "Failed to spawn the vehicle.", "error");
                         return false;
                 }
@@ -196,7 +205,6 @@ export class Garage {
                         this.spawnedEntities.delete(entity);
                         DeleteEntity(entity);
                         await setVehicleStatus(vehicleId, "stored");
-                        this.updateCacheStatus(license, vehicleId, "stored");
                         notify(source, "Failed to spawn the vehicle.", "error");
                         return false;
                 }
@@ -205,7 +213,9 @@ export class Garage {
                 if (savedProps) {
                         try {
                                 setVehicleProperties(entity, JSON.parse(savedProps));
-                        } catch {}
+                        } catch (err) {
+                                console.warn(`[fivem-parking] failed to restore vehicle properties for #${vehicleId}: ${err instanceof Error ? err.message : String(err)}`);
+                        }
                 }
 
                 notify(source, "Successfully spawned vehicle.", "success");
@@ -236,11 +246,14 @@ export class Garage {
                         return false;
                 }
 
-                const cached = this.vehicleCache.get(license);
-                const vehicle = cached?.find(v => v.id === vehicleId) ?? await getVehicle(vehicleId);
-
+                const vehicle = await getVehicle(vehicleId);
                 if (!vehicle || vehicle.owner !== license) {
                         notify(source, "Something went wrong.", "error");
+                        return false;
+                }
+
+                if (!this.checkCooldown(source)) {
+                        notify(source, "Please wait before performing another vehicle action.", "error");
                         return false;
                 }
 
@@ -252,8 +265,6 @@ export class Garage {
                         notify(source, "Vehicle is not impounded!", "error");
                         return false;
                 }
-
-                this.updateCacheStatus(license, vehicleId, "stored");
 
                 notify(source, "Successfully returned vehicle from impound.", "success");
                 await sendLog(`[VEHICLE] ${getPlayerDisplayName(source)} (${source}) returned vehicle #${vehicleId} from impound.`);
@@ -284,13 +295,17 @@ export class Garage {
                 }
 
                 const plate = await this.generateUniquePlate();
+                if (!plate) {
+                        notify(source, "Failed to generate a unique plate.", "error");
+                        return false;
+                }
+
                 const vehicleId = await insertVehicle(plate, targetLicense, args.model);
                 if (!vehicleId) {
                         notify(source, "Failed to give vehicle.", "error");
                         return false;
                 }
 
-                this.vehicleCache.delete(targetLicense);
                 notify(source, "Successfully gave vehicle.", "success");
                 return true;
         }
@@ -318,7 +333,6 @@ export class Garage {
                         return false;
                 }
 
-                this.vehicleCache.delete(existing.owner);
                 notify(source, "Successfully deleted vehicle with the specified plate number from the database.", "success");
                 return true;
         }
@@ -351,6 +365,10 @@ export class Garage {
                 const coords = GetEntityCoords(ped, true);
                 const heading = GetEntityHeading(ped);
                 const plate = await this.generateUniquePlate();
+                if (!plate) {
+                        notify(source, "Failed to generate a unique plate.", "error");
+                        return false;
+                }
                 const rad = (heading * Math.PI) / 180;
                 const spawnX = coords[0] + Math.sin(-rad) * 5;
                 const spawnY = coords[1] + Math.cos(-rad) * 5;
@@ -384,7 +402,6 @@ export class Garage {
                 }
 
                 this.spawnedEntities.set(entity, vehicleId);
-                this.vehicleCache.delete(license);
 
                 notify(source, "Successfully spawned vehicle.", "success");
                 return true;

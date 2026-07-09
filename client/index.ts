@@ -1,8 +1,9 @@
 import { cache, registerContext, showContext, onServerCallback, triggerServerCallback, getVehicleProperties } from "@overextended/ox_lib/client";
 
-type Vehicle = { id: number; plate: string; model: string; stored: string | null };
+type VehicleStatus = "stored" | "outside" | "impound";
+type Vehicle = { id: number; plate: string; model: string; stored: VehicleStatus };
 
-const STATUS_LABELS: Record<string, string> = { stored: "In Garage", outside: "Outside", impound: "Impounded" };
+const STATUS_LABELS: Record<VehicleStatus, string> = { stored: "In Garage", outside: "Outside", impound: "Impounded" };
 
 onServerCallback("fivem-parking:client:getVehicleProperties", () => {
         if (!cache.vehicle) return null;
@@ -19,7 +20,7 @@ onServerCallback("fivem-parking:client:listVehicles", (vehicles: Vehicle[], titl
                         metadata: [
                                 {
                                         label: "Status",
-                                        value: (vehicle.stored && STATUS_LABELS[vehicle.stored]) || "Unknown",
+                                        value: STATUS_LABELS[vehicle.stored] ?? "Unknown",
                                 },
                         ],
                         disabled: !state,

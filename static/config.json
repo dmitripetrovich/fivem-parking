@@ -6,14 +6,12 @@
         },
         "Impound": {
                 "Cost": 1000,
-                "Location": [
-                        {
-                                "x": 407.9077,
-                                "y": -1632.7781,
-                                "z": 29.6505,
-                                "radius": 10
-                        }
-                ]
+                "Location": {
+                        "x": 407.9077,
+                        "y": -1632.7781,
+                        "z": 29.6505,
+                        "radius": 10
+                }
         },
         "Cooldown": 5000,
         "Group": "group.staff:1",

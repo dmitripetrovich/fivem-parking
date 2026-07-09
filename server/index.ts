@@ -1,5 +1,4 @@
 import { onClientCallback } from "@overextended/ox_lib/server";
-import { Config, getPlayerLicense, notify } from "./utils";
 import "./commands";
 import { getVehicleByPlate, getOwnedVehicles, countAllVehicles, resetOutsideVehicles, setVehicleStatus, type VehicleStatus } from "./db";
 import { garage } from "./garage/class";
@@ -11,21 +10,14 @@ on("onResourceStart", async (resourceName: string) => {
         if (reset > 0) console.log(`Reset ${reset} ghost vehicle(s) to stored.`);
 });
 
-const cooldowns = new Set<number>();
-
-on("playerDropped", () => {
-        const src = source;
-        cooldowns.delete(src);
-        const license = getPlayerLicense(src);
-        if (license) garage.clearPlayerCache(license);
+on("onResourceStop", (resourceName: string) => {
+        if (resourceName !== GetCurrentResourceName()) return;
+        garage.cleanupSpawnedEntities();
 });
 
-function checkCooldown(src: number): boolean {
-        if (cooldowns.has(src)) return false;
-        cooldowns.add(src);
-        setTimeout(() => cooldowns.delete(src), Config.Cooldown);
-        return true;
-}
+on("playerDropped", () => {
+        garage.clearCooldown(source);
+});
 
 exports("impoundVehicle", async (plate: string): Promise<boolean> => {
         if (typeof plate !== "string" || !plate) return false;
@@ -62,17 +54,9 @@ exports("isVehicleOutside", async (plate: string): Promise<boolean> => {
 });
 
 onClientCallback("fivem-parking:server:returnVehicle", async (src: number, vehicleId: number) => {
-        if (!checkCooldown(src)) {
-                notify(src, "Please wait before performing another vehicle action.", "error");
-                return false;
-        }
         return garage.returnVehicle(src, { vehicleId });
 });
 
 onClientCallback("fivem-parking:server:spawnVehicle", async (src: number, vehicleId: number) => {
-        if (!checkCooldown(src)) {
-                notify(src, "Please wait before performing another vehicle action.", "error");
-                return false;
-        }
         return garage.spawnVehicle(src, { vehicleId });
 });
